@@ -42,17 +42,25 @@ class Preprocessor:
     def drop_column_from(self, df_name, column_name):
         self.dataframes[df_name].drop(column_name, axis=1, inplace = True)
     
+    def replace_column()
+
     def fill_na_rows(self, df_name, fill_dict):
         df = self.dataframes[df_name]
         for key, value in fill_dict.items():
             time.sleep(1/10)
             print(f"Filling empty {key} values in {df_name} with {value}....")
             df.loc[:, key] = df.loc[:, key].fillna(value)
-    def process_data(self, df_name, processing_dict):
+   
+    def create_synthetic_features(self, df_name, processing_dict): 
         df = self.dataframes[df_name]
-        for key, value in processing_dict.items():
-            operation =          
-            #key = name of new feature #value = operation pipline
+        for synfeat, operation_pipeline in processing_dict.items():
+            for idx, op in enumerate(operation_pipeline):
+                if op["op_name"] == 'replace':
+                    df[synfeat] = df[*op["targets"]].replace(op["inputs"])
+                else:
+                    func = getattr(np, op["op_name"])
+                    inputs = op["targets"] if idx == 0 else [result, *op["targets"]]
+                    result = func(inputs)
     
     def replace_columns(self, df_name, replacement_dict):
         
@@ -81,7 +89,7 @@ paths = {
 
 # row_name : fill_val
 
-
+'''
 pre = Preprocessor(paths)
 pre.check_duplicate_IDs()
 pre.drop_column_from('train', 'Id')
@@ -89,7 +97,7 @@ pre.drop_column_from('train', 'Id')
 pre.fill_na_rows('train', FILL_NA_DICT)
 pre.replace_columns('train', NUMERIC_COLUMNS_AS_CATEGORIES)
 pre.replace_columns('train', CATEGORICAL_COLUMNS_AS_NUMBERS)
-
+'''
 
 #print(pre.dataframes['train'].head())
 '''

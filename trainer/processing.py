@@ -213,24 +213,24 @@ FEATURE_SIMPLIFICATIONS = {
     },
 }
 
-ENGINEER_FEATURES = {
-    # Has Masonry Veneer condenses features that have limited value into boolean
+SYNTHETIC_FEATURES = {
     "HasMasVnr": [
-        'op': "replace",
-        'targets': ["MasVnrType"],
-        "inputs": {
-            "BrkCmn" : 1, 
-            "BrkFace" : 1, 
-            "CBlock" : 1, 
-            "Stone" : 1, 
-            "None" : 0
+        {
+            'op': "replace",
+            'targets': ["MasVnrType"],
+            "inputs": {
+                "BrkCmn" : 1, 
+                "BrkFace" : 1, 
+                "CBlock" : 1, 
+                "Stone" : 1, 
+                "None" : 0
+            }
         },
     ],
-
     # House completed before sale does the same but for only Partial values
     "BoughtOffPlan": [
         {
-            'op': 'replace',
+            'op_name': 'replace',
             'targets': ['SaleCondition'],
             'inputs': {
                 "Abnorml" : 0,
@@ -242,14 +242,15 @@ ENGINEER_FEATURES = {
             }
         },
     ],
-
     # Condense values for overall grade to reduce feature redundancy
     "OverallGrade":[
         {
-            "op": 'multiply',
+            "op_name": 'prod',
             'targets': ["OverallQual", "OverallCond"],
         },
     ],
+}
+'''
 
     "GarageGrade":[
         {
