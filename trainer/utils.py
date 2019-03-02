@@ -48,7 +48,12 @@ class Preprocessor:
             time.sleep(1/10)
             print(f"Filling empty {key} values in {df_name} with {value}....")
             df.loc[:, key] = df.loc[:, key].fillna(value)
-
+    def process_data(self, df_name, processing_dict):
+        df = self.dataframes[df_name]
+        for key, value in processing_dict.items():
+            operation =          
+            #key = name of new feature #value = operation pipline
+    
     def replace_columns(self, df_name, replacement_dict):
         
         for key, value in replacement_dict.items():

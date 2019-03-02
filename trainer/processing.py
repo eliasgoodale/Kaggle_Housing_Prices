@@ -212,9 +212,9 @@ FEATURE_SIMPLIFICATIONS = {
         4 : 2, 5 : 2 # good
     },
 }
-'''
+
 ENGINEER_FEATURES = {
-    # Has Masonry Veneer
+    # Has Masonry Veneer condenses features that have limited value into boolean
     "HasMasVnr": [
         'op': "replace",
         'targets': ["MasVnrType"],
@@ -227,7 +227,7 @@ ENGINEER_FEATURES = {
         },
     ],
 
-    # House completed before sale
+    # House completed before sale does the same but for only Partial values
     "BoughtOffPlan": [
         {
             'op': 'replace',
@@ -243,6 +243,7 @@ ENGINEER_FEATURES = {
         },
     ],
 
+    # Condense values for overall grade to reduce feature redundancy
     "OverallGrade":[
         {
             "op": 'multiply',
@@ -252,7 +253,7 @@ ENGINEER_FEATURES = {
 
     "GarageGrade":[
         {
-            "op": 'multiply'
+            "op": 'multiply',
             "targets": ["GarageQual", "GarageCond"],
         } 
 
@@ -266,93 +267,107 @@ ENGINEER_FEATURES = {
     ]
     "KitchenScore":[
         {
-            "op":
+            "op": 'multiply',
             "targets": ["KitchenAbvGr","KitchenQual"],
         } 
 
     ]
     "FireplaceScore":[
         {
-            "op":
+            "op": 'multiply',
             "targets": ["Fireplaces","FireplaceQu"],
         } 
 
     ]
     "GarageScore":[
         {
-            "op":
+            "op": 'multiply',
             "targets": ["GarageArea","GarageQual"],
         } 
 
     ]
     "PoolScore":[
         {
-            "op":
+            "op": 'multiply',
             "targets": ["PoolArea","PoolQC"],
         } 
 
     ]
     "SimplOverallGrade":[
         {
-            "op":
+            "op": 'multiply',
             "targets": ["SimplOverallQual","SimplOverallCond"],
         } 
 
     ]
     "SimplExterGrade":[
         {
-            "op":
+            "op": 'multiply',
             "targets": ["SimplExterQual","SimplExterCond"],
         } 
 
     ]
     "SimplPoolScore":[
         {
-            "op":
+            "op": 'multiply',
             "targets": ["PoolArea","SimplPoolQC"],
         } 
 
     ]
     "SimplGarageScore":[
         {
-            "op":
+            "op": 'multiply',
             "targets": ["GarageArea","SimplGarageQual"],
         } 
 
     ]
     "SimplFireplaceScore":[
         {
-            "op":
+            "op": 'multiply',
             "targets": ["Fireplaces","SimplFireplaceQu"],
         } 
 
     ]
     "SimplKitchenScore":[
         {
-            "op":
+            "op": 'multiply',
             "targets": ["KitchenAbvGr","SimplKitchenQual"],
         } 
 
     ]
     "TotalBath":[
         {
-            "op":
-        } 
+            "op": 'multiply',
+            "targets": [0.5, "BsmtHalfBath"]
+        },
+        {
+            "op": "multiply",
+            "targets": [0.5, "HalfBath"]
+        },
+        {
+            "op": "add",
+            "targets": ["0", "1", "BsmntFullBath", "FullBath"]
+        }
 
     ]
     "AllSF":[
         {
-            "op":
+            "op": "add",
+            "targets": ["GrLivArea", "TotalBsmntSF"]
         } 
 
     ]
     "AllFlrsSF":[
-        "op": 
-
+        {
+            "op": "add",
+            "targets": ["1stFlrSF", "2ndFlrSF"]
+        }
     ]
     "AllPorchSF":[
-        "op": 
-
+        {
+            "op": "add",
+            "targets": ["OpenPorchSF", "EnclosedPorch", "3SsnPorch", "ScreenPorch"]
+        }
     ]
     }
 }
