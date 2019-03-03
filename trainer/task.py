@@ -53,7 +53,7 @@ def build_network_and_compute_RMSE(model_name, X_train, X_valid, y_train, y_vali
         verbose=0,
         epochs=1000)
     #model.load_weights('./models/best.hdf5')
-    test_data = pd.read_csv
+
     pred = model.predict(X_valid)
     pd.DataFrame({
             "Id": list(range(1,len(y_valid) + 1)),
