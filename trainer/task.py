@@ -18,18 +18,20 @@ import time
 
 '''
 def describe_data(X_train, X_valid, y_train, y_valid):
-    print(f"Shape X_train: {X_train.shape}")
-    print(X_train.describe())
-    print(f"Shape X_valid: {X_valid.shape}")
-    print(X_valid.describe())
-    print(f"Shape y_train: {y_train.shape}")
-    print(y_train.describe())
-    print(f"Shape y_valid: {y_valid.shape}")
-    print(y_valid.describe())
+    #print(f"Shape X_train: {X_train.shape}")
+    #print(X_train.describe())
+    #print(f"Shape X_valid: {X_valid.shape}")
+    #print(X_valid.describe())
+    #print(f"Shape y_train: {y_train.shape}")
+    #print(y_train.describe())
+    print(y_train)
+    #print(f"Shape y_valid: {y_valid.shape}")
+    #print(y_valid.describe())
+    print(y_valid)
 
-def build_network_and_compute_RMSE(model_name, X_train, X_valid, y_train, y_valid):
+def build_network_and_compute_RMSE(model_name, test_processing_level, X_train, X_valid, y_train, y_valid):
     def soft_acc(y_true, y_pred):
-        return K.mean(K.equal(K.round(y_true), K.round(y_pred)))
+        return K.mean(K.equal(K.round(y_true / 10), K.round(y_pred / 10)))
 
     def print_dict(d):
         for key, value in d.items():
@@ -51,41 +53,56 @@ def build_network_and_compute_RMSE(model_name, X_train, X_valid, y_train, y_vali
         validation_data=(X_valid, y_valid),
         callbacks=[tensorboard],
         verbose=0,
-        epochs=1000)
+        epochs=3000)
     #model.load_weights('./models/best.hdf5')
-
+    
     pred = model.predict(X_valid)
-    pd.DataFrame({
-            "Id": list(range(1,len(y_valid) + 1)),
-            "SalePrice": pred.flatten() 
-        }).to_csv(f'predictions/{model_name}.csv', index=False, header=True)
     score = np.sqrt(metrics.mean_squared_error(pred, y_valid))
     print(f'Score (RMSE): {score}')
+'''
+    X_test, id_list = load_data('numeric', test_processing_level, dataset='test')
+
+    test_pred = model.predict(X_test)
+    test_pred = test_pred.flatten()
+    pd.DataFrame({
+            "Id": id_list,
+            "SalePrice": test_pred 
+        }).to_csv(f'predictions/{model_name}.csv', index=False, header=True)
+'''
     #config = model.get_config()
     #print_dict(config)
     
 
 NAIVE = f"Ames-Dataset-Sequential-NAIVE-{int(time.time())}"
+NAIVE_PROCESSING_LEVEL = "DROP_ALL_NA"
 
 WITH_NAFEATURE_HANDLING = f"Ames-Dataset-Sequential-WITH_NAFEATURE_HANDLING-{int(time.time())}"
+WITH_NAFH_PROCESSING_LEVEL = 'HANDLE_NA_WITH_MEDIAN'
 
 WITH_NAFEATURE_AND_OUTLIER_HANDLING = f"Ames-Dataset-Sequential-WITH_NAFEATURE_AND_OUTLIER_HANDLING-{int(time.time())}"
+FULL_PROCESSING_LEVEL = 'FULL'
 
-
-X_train, X_valid, y_train, y_valid = load_data('numeric', 'DROP_ALL_NA')
-describe_data(X_train, X_valid, y_train, y_valid)
-build_network_and_compute_RMSE(NAIVE, X_train, X_valid, y_train, y_valid)
-
-#X_train, X_valid, y_train, y_valid = load_data('numeric', 'HANDLE_NA_WITH_MEDIAN')
-
-
+#X_train, X_valid, y_train, y_valid = load_data('numeric', 'DROP_ALL_NA')
 #describe_data(X_train, X_valid, y_train, y_valid)
-#build_network_and_compute_RMSE(WITH_NAFEATURE_HANDLING, X_train, X_valid, y_train, y_valid)
+#build_network_and_compute_RMSE(NAIVE, NAIVE_PROCESSING_LEVEL, X_train, X_valid, y_train, y_valid)
+
+X_train, X_valid, y_train, y_valid = load_data('numeric', 'HANDLE_NA_WITH_MEDIAN')
+describe_data(X_train, X_valid, y_train, y_valid)
+build_network_and_compute_RMSE(
+    WITH_NAFEATURE_HANDLING, WITH_NAFH_PROCESSING_LEVEL, X_train, X_valid, y_train, y_valid)
+
 
 #X_train, X_valid, y_train, y_valid = load_data('numeric', 'FULL')
-#build_network_and_compute_RMSE(WITH_NAFEATURE_AND_OUTLIER_HANDLING, X_train, X_valid, y_train, y_valid)
+#describe_data(X_train, X_valid, np.expm1(y_train), np.expm1(y_valid))
+#X_test, id_list = load_data('numeric', 'FULL', dataset='test')
+#print('----------------TEST SET-----------------',X_test )
+#print('________________VALIDATION_SET____________',X_valid)
+#build_network_and_compute_RMSE(
+#    WITH_NAFEATURE_AND_OUTLIER_HANDLING, FULL_PROCESSING_LEVEL, X_train, X_valid, y_train, y_valid)
 #print("X_train : " + str(X_train.shape))
 #print("X_valid : " + str(X_valid.shape))
 #print("y_train : " + str(y_train.shape))
 #print("y_valid : " + str(y_valid.shape))
 
+# RMSE39104.82612105051
+# 37864.35116762256

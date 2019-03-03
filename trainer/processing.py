@@ -2,40 +2,73 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from scipy.stats import skew
+from scipy.stats import skew, zscore
 import time
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 NUMERICS = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
 
-def load_data(return_type='all', preprocessing_type='FULL'):
+def load_data(return_type='all', preprocessing_type='FULL', dataset='train'):
     train = pd.read_csv("../data/train.csv")
-    #print("train : " + str(train.shape))
+    test = pd.read_csv('../data/test.csv')
+    # print("train : " + str(train.shape))
     idsUnique = len(set(train.Id))
     idsTotal = train.shape[0]
     idsDupli = idsTotal - idsUnique
-    #print("There are " + str(idsDupli) + " duplicate IDs for " + str(idsTotal) + " total entries")
-
+    # print("There are " + str(idsDupli) + " duplicate IDs for " + str(idsTotal) + " total entries")
+    id_list = test.Id
+    test.drop("Id", axis=1, inplace=True)
     # Drop Id column
 
     
     y = np.log1p(train.SalePrice)
-    #print(type(y))
+    # print(type(y))
 
     if preprocessing_type == 'DROP_ALL_NA':
         null_columns=train.columns[train.isnull().any()]
         
         train = train.drop(null_columns, axis=1)
         train = train.select_dtypes(include=NUMERICS)
-        print(train.columns)
-        y = train.SalePrice
+        test = test.drop(null_columns, axis=1)
+        test = test.select_dtypes(include=NUMERICS)
+        y_train = train.SalePrice
         train.drop("SalePrice", axis=1, inplace=True)
-        return train_test_split(train, y, test_size=0.3, random_state=0)
+        train.drop("Id", axis=1, inplace=True)
+
+        # print(set(train.columns) - set(test.columns))
+        if dataset == 'train':
+            return train_test_split(train, y_train, test_size=0.3, random_state=0)
+        else:
+            return train, id_list
     if preprocessing_type == 'HANDLE_NA_WITH_MEDIAN':
         train = train.select_dtypes(include=NUMERICS)
-        train = train.fillna(train.median())
-        return train_test_split(train, y, test_size=0.3, random_state=0)
-    
+        test = test.select_dtypes(include=NUMERICS)
+        train = train.fillna(test.median())
+        test = test.fillna(test.median())
+
+        y_train = train.SalePrice
+        train.drop("SalePrice", axis=1, inplace=True)
+        train.drop("Id", axis=1, inplace=True)
+        if dataset == 'train':
+            return train_test_split(train, y_train, test_size=0.3, random_state=0)
+        else:
+            return test, id_list
+    if preprocessing_type == 'FULL':
+        train = train.select_dtypes(include=NUMERICS)
+        test = test.select_dtypes(include=NUMERICS)
+        train = train.fillna(test.median())
+        test = test.fillna(test.median())
+
+        y_train = train.SalePrice
+        train.drop("SalePrice", axis=1, inplace=True)
+        train.drop("Id", axis=1, inplace=True)
+        
+        train[(np.abs(zscore(train)) < 3).all(axis=1)]
+        #test[(np.abs(zscore(test)) < 3).all(axis=1)]
+        if dataset == 'train':
+            return train_test_split(train, y_train, test_size=0.3, random_state=0)
+        else:
+            return test, id_list
     train.drop("Id", axis = 1, inplace = True)
     train.loc[:, "Alley"] = train.loc[:, "Alley"].fillna("None")
     # BedroomAbvGr : NA most likely means 0
@@ -250,9 +283,10 @@ def load_data(return_type='all', preprocessing_type='FULL'):
     train["BoughtOffPlan"] = train.SaleCondition.replace({"Abnorml" : 0, "Alloca" : 0, "AdjLand" : 0, 
                                                         "Family" : 0, "Normal" : 0, "Partial" : 1})
     print("Find most important features relative to target")
-    corr = train.corr()
-    corr.sort_values(["SalePrice"], ascending = False, inplace = True)
-    print(corr.SalePrice)
+    if dataset == 'train':
+        corr = train.corr()
+        corr.sort_values(["SalePrice"], ascending = False, inplace = True)
+        print(corr.SalePrice)
     # Create new features
     # 3* Polynomials on the top 10 existing features
     train["OverallQual-s2"] = train["OverallQual"] ** 2
@@ -289,42 +323,45 @@ def load_data(return_type='all', preprocessing_type='FULL'):
     # Differentiate numerical features (minus the target) and categorical features
     categorical_features = train.select_dtypes(include = ["object"]).columns
     numerical_features = train.select_dtypes(exclude = ["object"]).columns
-    numerical_features = numerical_features.drop("SalePrice")
-    print("Numerical features : " + str(len(numerical_features)))
-    print("Categorical features : " + str(len(categorical_features)))
+    if dataset == 'train':
+        numerical_features = numerical_features.drop("SalePrice")
+    # print("Numerical features : " + str(len(numerical_features)))
+    # print("Categorical features : " + str(len(categorical_features)))
     train_num = train[numerical_features]
     train_cat = train[categorical_features]
 
     # Handle remaining missing values for numerical features by using median as replacement
-    print("NAs for numerical features in train : " + str(train_num.isnull().values.sum()))
+    # print("NAs for numerical features in train : " + str(train_num.isnull().values.sum()))
     train_num = train_num.fillna(train_num.median())
-    print("Remaining NAs for numerical features in train : " + str(train_num.isnull().values.sum()))
+    # print("Remaining NAs for numerical features in train : " + str(train_num.isnull().values.sum()))
 
     
     skewness = train_num.apply(lambda x: skew(x))
     skewness = skewness[abs(skewness) > 0.5]
-    print(str(skewness.shape[0]) + " skewed numerical features to log transform")
+    # print(str(skewness.shape[0]) + " skewed numerical features to log transform")
     skewed_features = skewness.index
     train_num[skewed_features] = np.log1p(train_num[skewed_features])
-    print("before:-----------",train_cat.columns)
+    # print("before:-----------",train_cat.columns)
     # Create dummy features for categorical values via one-hot encoding
-    print("NAs for categorical features in train : " + str(train_cat.isnull().values.sum()))
+    # print("NAs for categorical features in train : " + str(train_cat.isnull().values.sum()))
     train_cat = pd.get_dummies(train_cat)
-    print("Remaining NAs for categorical features in train : " + str(train_cat.isnull().values.sum()))
+    # print("Remaining NAs for categorical features in train : " + str(train_cat.isnull().values.sum()))
 
-    print("after----------", train_cat.columns)
+    # print("after----------", train_cat.columns)
 
     # Join categorical and numerical features
+    if dataset == 'test':
+        return train_num, id_list 
     if return_type == 'numeric':
         return train_test_split(train_num, y, test_size=0.3, random_state=0)
     elif return_type == 'categorical':
         return train_test_split(train_cat, y, test_size=0.3, random_state=0)
     else:
         train = pd.concat([train_num, train_cat], axis = 1)
-        print("New number of features : " + str(train.shape[1]))
+        # print("New number of features : " + str(train.shape[1]))
     
         train = pd.concat([train_num, train_cat], axis = 1)
-        print("New number of features : " + str(train.shape[1]))
+        # print("New number of features : " + str(train.shape[1]))
     
         # Partition the dataset in train + validation sets
     
