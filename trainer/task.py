@@ -10,7 +10,7 @@ import time
 
 NAME = f"Ames-Dataset-Sequential-{int(time.time())}"
 
-X_train, X_valid, y_train, y_valid = load_data()
+X_train, X_valid, y_train, y_valid = load_data('numeric')
 
 print("X_train : " + str(X_train.shape))
 print("X_valid : " + str(X_valid.shape))
@@ -34,7 +34,17 @@ model = Sequential([
 
 
 
-model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy', 'mean_squared_error'])
+model.compile(loss='mean_squared_error', optimizer='adam')
+
+config = model.get_config()
+
+def print_dict(d):
+    for key, value in d.items():
+        print(f"{key} => {value}")
+
+print_dict(config)
+
+'''
 model.fit(
     X_train,
     y_train,
@@ -48,3 +58,4 @@ model.fit(
 pred = model.predict(X_valid)
 score = np.sqrt(metrics.mean_squared_error(pred, y_valid))
 print(f'Score (RMSE): {score}')
+'''

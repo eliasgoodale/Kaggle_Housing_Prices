@@ -295,15 +295,17 @@ def load_data():
     print("after----------", train_cat.columns)
 
     # Join categorical and numerical features
-    train = pd.concat([train_num, train_cat], axis = 1)
-    print("New number of features : " + str(train.shape[1]))
-
-    train = pd.concat([train_num, train_cat], axis = 1)
-    print("New number of features : " + str(train.shape[1]))
-
-    # Partition the dataset in train + validation sets
-
-    X_train, X_test, y_train, y_test = train_test_split(train, y, test_size = 0.3, random_state = 0)
-
-
-    return X_train, X_test, y_train, y_test
+    if return_type == 'numeric':
+        return test_train_split(train_num, y, test_size=0.3, random_state=0)
+    elif return_type == 'categorical':
+        return train_test_split(train_cat, y, test_size=0.3, random_state=0)
+    else:
+        train = pd.concat([train_num, train_cat], axis = 1)
+        print("New number of features : " + str(train.shape[1]))
+    
+        train = pd.concat([train_num, train_cat], axis = 1)
+        print("New number of features : " + str(train.shape[1]))
+    
+        # Partition the dataset in train + validation sets
+    
+        return train_test_split(train, y, test_size = 0.3, random_state = 0)
