@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from processing import processing_fn
+
 from sklearn.model_selection import train_test_split
 from scipy.stats import skew
 import time
@@ -73,9 +73,9 @@ class Preprocessor:
         print(f'After fill: {str(df.isnull().values.sum())}')
 
     def fill_na_categorical_columns(self, df_name):
-        df = self.dataframes[df_name]
+        df = self.dataframes[df_name].copy()
         print(f"Before fill: {str(df.isnull().values.sum())}")
-        df = pd.get_dummies(df)
+        self.dataframes[df_name] = pd.get_dummies(df)
         print(f"After fill: {str(df.isnull().values.sum())}")
     
     def join_dataframes(self, new_df_name, df_names, axis=1):
@@ -96,8 +96,16 @@ class Preprocessor:
         skewness = df.apply(lambda x: skew(x))
         skewness = skewness[abs(skewness) > 0.5]
         skewed_features = skewness.index
+        print(skewed_features)
         df[skewed_features] = np.log1p(df[skewed_features])
-   
+
+    def load_data(self, from_df_name, y_target, test_size, random_state=0):
+        df = self.dataframes[from_df_name].copy()
+        print(type(y_target))
+        return train_test_split(df, y_target, test_size, random_state)
+
+        
+        return train_test_split
     def combine_operations(self, df, ops, synthfeat):
         for idx, op in enumerate(ops):
             cols = op['targets'] if idx == 0 else [synthfeat, *op['targets']]
@@ -113,20 +121,6 @@ class Preprocessor:
         for synthfeature, ops_pipeline in synthfeatures_list.items():    
             self.combine_operations(dataframe, ops_pipeline, synthfeature)
 
-paths = {
-    'train': '../data/train.csv',
-    'test': '../data/test.csv'
-}
-prep = Preprocessor(paths, processing_fn)
 
-prep.process_data('train')
-prep.feature_corr('train', 'SalePrice')
-prep.feature_types('train', split_dataframe=True)
 
-prep.drop_column_from('train_num', 'SalePrice')
-prep.fill_na_numerical_columns('train_num', 'median')
-prep.skew_features('train_num')
 
-prep.fill_na_categorical_columns('train_cat')
-print (prep.dataframes.keys())
-prep.join_dataframes('train', ['train_num','train_cat'])
