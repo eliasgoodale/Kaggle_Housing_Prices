@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
-import keras.backend as K 
+import keras.backend as K
+import pandas as pd
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
@@ -52,7 +53,12 @@ def build_network_and_compute_RMSE(model_name, X_train, X_valid, y_train, y_vali
         verbose=0,
         epochs=1000)
     #model.load_weights('./models/best.hdf5')
+    test_data = pd.read_csv
     pred = model.predict(X_valid)
+    pd.DataFrame({
+            "Id": list(range(1,len(y_valid) + 1)),
+            "SalePrice": pred.flatten() 
+        }).to_csv(f'predictions/{model_name}.csv', index=False, header=True)
     score = np.sqrt(metrics.mean_squared_error(pred, y_valid))
     print(f'Score (RMSE): {score}')
     #config = model.get_config()
@@ -66,8 +72,9 @@ WITH_NAFEATURE_HANDLING = f"Ames-Dataset-Sequential-WITH_NAFEATURE_HANDLING-{int
 WITH_NAFEATURE_AND_OUTLIER_HANDLING = f"Ames-Dataset-Sequential-WITH_NAFEATURE_AND_OUTLIER_HANDLING-{int(time.time())}"
 
 
-#X_train, X_valid, y_train, y_valid = load_data('numeric', 'DROP_ALL_NA')
-#build_network_and_compute_RMSE(NAIVE, X_train, X_valid, y_train, y_valid)
+X_train, X_valid, y_train, y_valid = load_data('numeric', 'DROP_ALL_NA')
+describe_data(X_train, X_valid, y_train, y_valid)
+build_network_and_compute_RMSE(NAIVE, X_train, X_valid, y_train, y_valid)
 
 #X_train, X_valid, y_train, y_valid = load_data('numeric', 'HANDLE_NA_WITH_MEDIAN')
 
@@ -75,8 +82,8 @@ WITH_NAFEATURE_AND_OUTLIER_HANDLING = f"Ames-Dataset-Sequential-WITH_NAFEATURE_A
 #describe_data(X_train, X_valid, y_train, y_valid)
 #build_network_and_compute_RMSE(WITH_NAFEATURE_HANDLING, X_train, X_valid, y_train, y_valid)
 
-X_train, X_valid, y_train, y_valid = load_data('numeric', 'FULL')
-build_network_and_compute_RMSE(WITH_NAFEATURE_AND_OUTLIER_HANDLING, X_train, X_valid, y_train, y_valid)
+#X_train, X_valid, y_train, y_valid = load_data('numeric', 'FULL')
+#build_network_and_compute_RMSE(WITH_NAFEATURE_AND_OUTLIER_HANDLING, X_train, X_valid, y_train, y_valid)
 #print("X_train : " + str(X_train.shape))
 #print("X_valid : " + str(X_valid.shape))
 #print("y_train : " + str(y_train.shape))

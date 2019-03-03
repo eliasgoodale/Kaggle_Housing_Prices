@@ -17,9 +17,9 @@ def load_data(return_type='all', preprocessing_type='FULL'):
     #print("There are " + str(idsDupli) + " duplicate IDs for " + str(idsTotal) + " total entries")
 
     # Drop Id column
-    train.drop("Id", axis = 1, inplace = True)
-    train.SalePrice = np.log1p(train.SalePrice)
-    y = train.SalePrice
+
+    
+    y = np.log1p(train.SalePrice)
     #print(type(y))
 
     if preprocessing_type == 'DROP_ALL_NA':
@@ -28,12 +28,15 @@ def load_data(return_type='all', preprocessing_type='FULL'):
         train = train.drop(null_columns, axis=1)
         train = train.select_dtypes(include=NUMERICS)
         print(train.columns)
-        y = np.log1p(train.SalePrice)
+        y = train.SalePrice
+        train.drop("SalePrice", axis=1, inplace=True)
         return train_test_split(train, y, test_size=0.3, random_state=0)
     if preprocessing_type == 'HANDLE_NA_WITH_MEDIAN':
         train = train.select_dtypes(include=NUMERICS)
         train = train.fillna(train.median())
         return train_test_split(train, y, test_size=0.3, random_state=0)
+    
+    train.drop("Id", axis = 1, inplace = True)
     train.loc[:, "Alley"] = train.loc[:, "Alley"].fillna("None")
     # BedroomAbvGr : NA most likely means 0
     train.loc[:, "BedroomAbvGr"] = train.loc[:, "BedroomAbvGr"].fillna(0)
