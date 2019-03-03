@@ -6,20 +6,34 @@ from scipy.stats import skew
 import time
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
-def load_data():
+NUMERICS = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+
+def load_data(return_type='all', preprocessing_type='FULL'):
     train = pd.read_csv("../data/train.csv")
-    print("train : " + str(train.shape))
+    #print("train : " + str(train.shape))
     idsUnique = len(set(train.Id))
     idsTotal = train.shape[0]
     idsDupli = idsTotal - idsUnique
-    print("There are " + str(idsDupli) + " duplicate IDs for " + str(idsTotal) + " total entries")
+    #print("There are " + str(idsDupli) + " duplicate IDs for " + str(idsTotal) + " total entries")
 
     # Drop Id column
     train.drop("Id", axis = 1, inplace = True)
     train.SalePrice = np.log1p(train.SalePrice)
     y = train.SalePrice
-    print(type(y))
+    #print(type(y))
 
+    if preprocessing_type == 'DROP_ALL_NA':
+        null_columns=train.columns[train.isnull().any()]
+        
+        train = train.drop(null_columns, axis=1)
+        train = train.select_dtypes(include=NUMERICS)
+        print(train.columns)
+        y = np.log1p(train.SalePrice)
+        return train_test_split(train, y, test_size=0.3, random_state=0)
+    if preprocessing_type == 'HANDLE_NA_WITH_MEDIAN':
+        train = train.select_dtypes(include=NUMERICS)
+        train = train.fillna(train.median())
+        return train_test_split(train, y, test_size=0.3, random_state=0)
     train.loc[:, "Alley"] = train.loc[:, "Alley"].fillna("None")
     # BedroomAbvGr : NA most likely means 0
     train.loc[:, "BedroomAbvGr"] = train.loc[:, "BedroomAbvGr"].fillna(0)
@@ -91,6 +105,7 @@ def load_data():
     train.loc[:, "Utilities"] = train.loc[:, "Utilities"].fillna("AllPub")
     # WoodDeckSF : NA most likely means no wood deck
     train.loc[:, "WoodDeckSF"] = train.loc[:, "WoodDeckSF"].fillna(0)
+    
     train = train.replace({"MSSubClass" : {20 : "SC20", 30 : "SC30", 40 : "SC40", 45 : "SC45", 
                                         50 : "SC50", 60 : "SC60", 70 : "SC70", 75 : "SC75", 
                                         80 : "SC80", 85 : "SC85", 90 : "SC90", 120 : "SC120", 
@@ -281,6 +296,8 @@ def load_data():
     print("NAs for numerical features in train : " + str(train_num.isnull().values.sum()))
     train_num = train_num.fillna(train_num.median())
     print("Remaining NAs for numerical features in train : " + str(train_num.isnull().values.sum()))
+
+    
     skewness = train_num.apply(lambda x: skew(x))
     skewness = skewness[abs(skewness) > 0.5]
     print(str(skewness.shape[0]) + " skewed numerical features to log transform")
@@ -296,7 +313,7 @@ def load_data():
 
     # Join categorical and numerical features
     if return_type == 'numeric':
-        return test_train_split(train_num, y, test_size=0.3, random_state=0)
+        return train_test_split(train_num, y, test_size=0.3, random_state=0)
     elif return_type == 'categorical':
         return train_test_split(train_cat, y, test_size=0.3, random_state=0)
     else:

@@ -103,9 +103,7 @@ class Preprocessor:
         df = self.dataframes[from_df_name].copy()
         print(type(y_target))
         return train_test_split(df, y_target, test_size, random_state)
-
         
-        return train_test_split
     def combine_operations(self, df, ops, synthfeat):
         for idx, op in enumerate(ops):
             cols = op['targets'] if idx == 0 else [synthfeat, *op['targets']]
